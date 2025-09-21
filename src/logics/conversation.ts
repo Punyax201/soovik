@@ -1,5 +1,7 @@
-import { createParser } from 'eventsource-parser'
-import type { ParsedEvent, ReconnectInterval } from 'eventsource-parser'
+// import { createParser } from 'eventsource-parser'
+// import type { ParsedEvent, ReconnectInterval } from 'eventsource-parser'
+import type { AxiosResponse } from 'axios'
+import axios from 'axios'
 import { updateConversationById } from '~/stores/conversation'
 import { getMessagesByConversationId, pushMessageByConversationId } from '~/stores/messages'
 import { setLoadingStateByConversationId, setStreamByConversationId } from '~/stores/streams'
@@ -14,13 +16,15 @@ export interface FetchPayload {
   signal?: AbortSignal
 }
 
+const baseUrl: string = 'https://rag-ai-test.onrender.com/ask'
+
 export async function handlePrompt(conversation: Conversation, prompt?: string, signal?: AbortSignal) {
   if (!appSettings.value.apiKey) {
     // eslint-disable-next-line no-alert
-    let apiKey = window.prompt('请输入API Key')
+    let apiKey = window.prompt('API Key')
     while (apiKey === null || apiKey.trim() === '') {
       // eslint-disable-next-line no-alert
-      apiKey = window.prompt('请输入API Key')
+      apiKey = window.prompt('API Key')
     }
     appSettings.value.apiKey = apiKey
   }
@@ -76,12 +80,14 @@ export async function handlePrompt(conversation: Conversation, prompt?: string, 
         messages,
         stream: true,
         max_tokens: 2000,
+        prompt: prompt || '',
       },
       signal,
     })
     if (response) {
-      if (!response.ok) {
-        const responseJson = await response.json()
+      // console.log(response)
+      if (!response.status) {
+        const responseJson = response.data
         console.error('responseJson', responseJson)
         const errMessage = responseJson.error?.message || response.statusText || 'Unknown error'
         throw new Error(errMessage, { cause: responseJson.error })
@@ -125,7 +131,7 @@ export async function handlePrompt(conversation: Conversation, prompt?: string, 
   }
 }
 
-export async function fetchChatCompletion(payload: FetchPayload) {
+export async function fetchChatCompletion(payload: any) {
   const initOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -133,50 +139,47 @@ export async function fetchChatCompletion(payload: FetchPayload) {
       'Accept': 'text/event-stream',
     },
     method: 'POST',
-    body: JSON.stringify(payload.body),
-    signal: payload.signal,
+    body: {
+      query: payload.body.prompt,
+      historical_context: payload.body.messages,
+      max_tokens: payload.body.max_tokens,
+      stream: payload.body.stream,
+      model: payload.body.model,
+    },
+    // signal: payload.signal,
   }
-  return fetch(`${payload.baseUrl}/chat/completions`, initOptions)
+  const response = await axios.post(baseUrl, initOptions.body, initOptions)
+  return response
 }
 
-export function parseStream(rawResponse: Response) {
+export function parseStream(rawResponse: AxiosResponse) {
   const encoder = new TextEncoder()
-  const decoder = new TextDecoder()
-  const rb = rawResponse.body as ReadableStream
-  return new ReadableStream({
-    async start(controller) {
-      const streamParser = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === 'event') {
-          const data = event.data
+  // const decoder = new TextDecoder()
+  // Axios returns response data as string, not ReadableStream
+  const data = rawResponse.data as { answer: string, sources: any }
 
-          if (data === '[DONE]') {
-            controller.close()
-            return
-          }
-          try {
-            const json = JSON.parse(data)
-            // const text = json.result || ''
-            const text = json.choices[0].delta?.content || ''
-            const queue = encoder.encode(text)
-            controller.enqueue(queue)
-          }
-          catch (e) {
-            controller.error(e)
-          }
-        }
-      }
-      const reader = rb.getReader()
-      const parser = createParser(streamParser)
-      let done = false
-      while (!done) {
-        const { done: isDone, value } = await reader.read()
-        if (isDone) {
-          done = true
+  return new ReadableStream({
+    start(controller) {
+      // Split data by newlines (each event)
+      const lines = data.answer.split('\n')
+      for (const line of lines) {
+        if (!line.trim())
+          continue
+        if (line === '[DONE]') {
           controller.close()
           return
         }
-        parser.feed(decoder.decode(value, { stream: true }))
+        try {
+          // const json = JSON.parse(line)
+          // const text = json.choices?.[0]?.delta?.content || ''
+          const queue = encoder.encode(line)
+          controller.enqueue(queue)
+        }
+        catch (e) {
+          controller.error(e)
+        }
       }
+      controller.close()
     },
   })
 }

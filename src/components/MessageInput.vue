@@ -110,7 +110,7 @@ watchEffect(() => {
       >
         <div class="i-carbon-stop-filled-alt h-4 w-4 fcc" />
         <span class="ml-2 truncate text-sm">
-          停止回答
+          Stop
         </span>
       </button>
     </div>
@@ -122,7 +122,7 @@ watchEffect(() => {
         @click="scrollToBottom"
       >
         <span class="mr-2 truncate text-sm">
-          滚动到底部
+          aaaa
         </span>
         <div class="i-carbon-arrow-down h-4 w-4 fcc" />
       </button>
@@ -142,7 +142,7 @@ watchEffect(() => {
           <div>{{ $currentErrorMessage?.message }}</div>
         </div>
         <div class="border rounded-md px-2 py-1 border-error hover:bg-white hv-base" @click="handleRetry()">
-          重试
+          Retry
         </div>
       </div>
 
@@ -157,7 +157,7 @@ watchEffect(() => {
           v-model="prompt"
           autofocus
           autocomplete="off"
-          :placeholder="isPC ? 'Enter 发送，Shift + Enter 换行' : 'Enter 发送'"
+          :placeholder="isPC ? 'Enter to send, Shift + Enter for newline' : 'Enter to send'"
           :rows="isPC ? 3 : 1"
           class="box-border h-full min-h-20px flex-1 resize-none rd p-2 shadow-sm outline-none md:(min-h-68px p-5) bg-base"
           @keydown="handleKeyDown"
@@ -171,13 +171,13 @@ watchEffect(() => {
           <div v-if="isLoading || isStreaming" class="fcc">
             <div class="i-carbon-renew h-5 w-5 animate-spin" />
             <span class="ml-2 truncate">
-              {{ isLoading ? '发送中' : '回答中' }}
+              {{ isLoading ? 'Sending...' : 'Answering...' }}
             </span>
           </div>
           <div v-else class="fcc">
             <div class="i-carbon-send-alt-filled h-5 w-5" />
             <span class="ml-2 truncate">
-              发送
+              Send
             </span>
           </div>
         </button>

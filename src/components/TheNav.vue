@@ -15,10 +15,6 @@ import { showConversationSidebar } from '~/stores/ui'
       >
         <div i-carbon-menu />
       </div>
-      <div class="flex items-baseline gap-3">
-        <span text-lg>卫博士</span>
-        <span text-sm>有用、有趣、有温度</span>
-      </div>
     </div>
 
     <div class="flex-auto" />

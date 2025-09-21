@@ -44,7 +44,6 @@ function handleDelete(e: MouseEvent, id: string) {
             aria-label="Search"
             class="m-0 w-full bg-transparent px-4 py-1 text-14px lh-26px outline-none"
             name="s"
-            placeholder="搜索历史记录..."
             autocomplete="off"
           >
         </form>
@@ -72,7 +71,7 @@ function handleDelete(e: MouseEvent, id: string) {
                 <div class="i-carbon-chat text-base c-primary" />
               </div>
               <div class="flex-1 truncate text-base group-hover:c-primary">
-                {{ item.name || '未命名对话' }}
+                {{ item.name }}
               </div>
               <div class="hidden group-hover:block">
                 <div class="inline-flex items-center gap-1 rounded-md p-2 hv-base" @click="handleDelete($event, item.id)">
@@ -92,7 +91,6 @@ function handleDelete(e: MouseEvent, id: string) {
           @click="handleAdd"
         >
           <div class="i-carbon-add text-base" />
-          <div>新建对话</div>
         </div>
       </div>
     </div>
