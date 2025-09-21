@@ -48,7 +48,7 @@ function parseMarkdown(raw: string) {
       ignoreMissing: true,
     })
     .use(rehypeKatex)
-    .use(rehypeStringify)
+    .use(rehypeStringify, { allowDangerousHtml: true })
     .processSync(raw)
   return String(file)
 }
